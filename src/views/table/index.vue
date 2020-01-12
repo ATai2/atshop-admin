@@ -2,7 +2,7 @@
   <div class="app-container">
 
     <span>表名</span>
-    <el-select v-model="tableName" placeholder="请选择">
+    <el-select v-model="tableName" @change="changeSelect" placeholder="请选择">
       <el-option
         v-for="item in options"
         :key="item.value"
@@ -11,6 +11,7 @@
       </el-option>
     </el-select>
     <el-button @click="addRecord">添加记录</el-button>
+    <el-button @click="fetchTableData">刷新数据</el-button>
     <el-table style="width: 100%" border :data="tableData">
       <template v-for="(item,index) in tableHead">
         <el-table-column :prop="item" :label="item" :key="index"
@@ -50,7 +51,7 @@
 </template>
 
 <script>
-  import {getTableInfo, addData,getTableData, updateData, getTables, deleteData} from '@/api/table'
+  import {getTableInfo, addData, getTableData, updateData, getTables, deleteData} from '@/api/table'
 
   export default {
     filters: {
@@ -81,16 +82,20 @@
       let i = 0
     },
     methods: {
+      changeSelect() {
+        this.fetchTableColumns()
+        this.fetchTableData()
+      },
       addRecord() {
         if (this.tableData != null) {
           let row = this.tableData[0]
-          let map={}
+          let map = {}
 
           for (let item of this.tableHead) {
-            map[item]=null
+            map[item] = null
           }
-          map.isSet=true
-          map.add=true
+          map.isSet = true
+          map.add = true
           this.tableData.unshift(map)
         }
       },
@@ -116,7 +121,7 @@
           row.isSet = true;
         }
       },
-      addData(row){
+      addData(row) {
         this.listLoading = true
         let that = this
         addData({tableName: that.tableName, id: row.id, data: row}).then(response => {
@@ -145,10 +150,9 @@
       fetchTableNames() {
         this.listLoading = true
         let that = this
+        that.tableHead = []
         getTables(null).then(response => {
-          // console.log(response)
           response.data.forEach(i => {
-            // console.log(i)
             that.options.push({lable: i['columnName'], value: i['columnName']})
           })
           console.log(that.tableHead)
@@ -158,6 +162,7 @@
       fetchTableColumns() {
         this.listLoading = true
         let that = this
+        that.tableHead = []
         getTableInfo({tableName: this.tableName}).then(response => {
           // console.log(response)
           response.data.forEach(i => {
@@ -179,9 +184,7 @@
             i['isSet'] = false
             that.tableData.push(i)
           })
-
           console.log(that.tableData)
-
           this.listLoading = false
         })
       }
